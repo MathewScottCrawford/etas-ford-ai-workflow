@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install ruff pytest fastapi pydantic
+
+      - name: Lint (ruff)
+        run: ruff check agents/ scripts/
+
+      - name: Run agent unit tests
+        run: pytest agents/ -v --ignore=agents/shared
+
+      - name: Validate n8n workflow JSON
+        run: |
+          python -c "
+          import json, glob, sys
+          files = glob.glob('workflows/n8n/*.json')
+          for f in files:
+              try:
+                  json.load(open(f))
+                  print(f'OK: {f}')
+              except Exception as e:
+                  print(f'FAIL: {f} — {e}')
+                  sys.exit(1)
+          "
+
+      - name: Validate docker-compose
+        run: docker compose -f infra/docker-compose.yml config --quiet

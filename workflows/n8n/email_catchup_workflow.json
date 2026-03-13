@@ -1,0 +1,351 @@
+{
+  "name": "email-catchup",
+  "nodes": [
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "36430cf1-294c-4c43-baf8-9f4cbb3f8813",
+              "leftValue": "= {{ $json.date }}",
+              "rightValue": "={{ $now.minus({weeks: 1}).toISO() }}",
+              "operator": {
+                "type": "dateTime",
+                "operation": "after"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        832,
+        -96
+      ],
+      "id": "61dd8828-d71c-45d8-b53a-44d721e9c2ac",
+      "name": "Less than 4 weeks old"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "d2155b7c-6234-499a-b9d1-51e686590840",
+              "leftValue": "={{ $json.from }}",
+              "rightValue": "linkedin.com",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        624,
+        0
+      ],
+      "id": "537305fa-2d72-47f6-82aa-1b7b29b8fb30",
+      "name": "LinkedIn Filter"
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "messageId": "={{ $json.message_id }}"
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1040,
+        0
+      ],
+      "id": "c41e469e-a262-4051-8228-edd7d322e4ab",
+      "name": "Delete Message",
+      "webhookId": "bc7d9de5-05c5-4da6-bac0-3e4a68f62d0b",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "TGI9tkxrOLW4HssB",
+          "name": "Gmail account"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        0
+      ],
+      "id": "f26cd634-4ab3-46e3-b5af-1fd956734603",
+      "name": "Daily Schedule"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "limit": 25,
+        "filters": {
+          "readStatus": "unread"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "110e4596-d55d-44b3-9678-b11a2b67bd27",
+      "name": "Fetch (25) Unread emails",
+      "webhookId": "9ed18c56-7af4-499c-a5a2-52d5f6b8f9cd",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "TGI9tkxrOLW4HssB",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items_out = [];\n\nfor (const item of items) {\n  const msg = item.json;\n  \n  // Extract label names as a flat array\n  const labelNames = (msg.labels || []).map(l => l.name);\n  \n  // Build clean normalized object\n  items_out.push({\n    json: {\n      message_id:   msg.id,\n      thread_id:    msg.threadId,\n      subject:      msg.Subject || msg.subject || '(no subject)',\n      from:         msg.From || msg.from || '',\n      to:           msg.To || msg.to || '',\n      snippet:      msg.snippet || '',\n      date:         msg.internalDate \n                      ? new Date(parseInt(msg.internalDate)).toISOString()\n                      : '',\n      labels:       labelNames,\n      is_unread:    labelNames.includes('UNREAD'),\n      is_inbox:     labelNames.includes('INBOX'),\n      account:      'gmail',\n      // body will be added in next iteration\n      // keeping this field present for schema consistency\n      body:         msg.body || msg.snippet || '',\n    }\n  });\n}\n\nreturn items_out;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        0
+      ],
+      "id": "58836077-3200-45e6-ae20-5def61c00a67",
+      "name": "Email Normalizer"
+    },
+    {
+      "parameters": {
+        "operation": "markAsRead",
+        "messageId": "={{ $json.message_id }}"
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        832,
+        224
+      ],
+      "id": "4d91680a-fae6-4319-81c7-d023f05e3385",
+      "name": "Mark Read: Non-LinkedIn",
+      "webhookId": "b0fde574-a568-4652-a447-26161b636090",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "TGI9tkxrOLW4HssB",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "markAsRead",
+        "messageId": "={{ $json.message_id }}"
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        288,
+        -384
+      ],
+      "id": "1dc39830-6115-4e0c-8e14-d0a045fae823",
+      "name": "Mark Read: Processed",
+      "webhookId": "b0fde574-a568-4652-a447-26161b636090",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "TGI9tkxrOLW4HssB",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "phi4-mini:latest",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        1024,
+        -208
+      ],
+      "id": "11fd95cb-719f-49ea-b209-cf50ebc0ecd2",
+      "name": "Ollama Chat Model1",
+      "credentials": {
+        "ollamaApi": {
+          "id": "rldtRa9RZiBh6N3b",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an email analyst. Analyze this LinkedIn email and extract structured information.\n\nEmail Details:\nSubject: {{ $json.subject }}\nFrom: {{ $json.from }}\nDate: {{ $json.date }}\nContent: {{ $json.body }}\n\nExtract and return ONLY a JSON object with exactly these fields:\n{\n  \"recruiter_name\": \"full name of the recruiter or sender\",\n  \"company_name\": \"company they are recruiting for\",\n  \"position_title\": \"job title or role mentioned\",\n  \"email_type\": \"one of: job_opportunity, connection_request, follow_up, other\",\n  \"summary\": \"one sentence summary of the email\"\n}\nReturn ONLY a raw JSON object on a single line.\nNo markdown. No backticks. No explanation. No newlines.\nExample output: {\"recruiter_name\":\"Jane Smith\",\"company_name\":\"Acme Corp\",\"position_title\":\"Software Engineer\",\"email_type\":\"job_opportunity\",\"summary\":\"Recruiter reached out about a senior engineering role.\"}",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        1024,
+        -384
+      ],
+      "id": "f9b152fc-0697-407e-8e81-8135919d8b90",
+      "name": "Extract LinkedIn Data"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items_out = [];\n\nfor (const item of items) {\n  // The LLM response comes back in output field\n  const rawText = item.json.output || item.json.text || '';\n  \n  let parsed = {};\n  try {\n    // Strip any accidental markdown backticks just in case\n    const cleaned = rawText\n      .replace(/```json/g, '')\n      .replace(/```/g, '')\n      .trim();\n    parsed = JSON.parse(cleaned);\n  } catch(e) {\n    // If parsing fails, log it and continue\n    parsed = {\n      recruiter_name: 'PARSE_ERROR',\n      company_name: 'PARSE_ERROR', \n      position_title: 'PARSE_ERROR',\n      email_type: 'unknown',\n      summary: rawText.substring(0, 200)\n    };\n  }\n\n  items_out.push({\n    json: {\n      // Pass through original fields we need\n      message_id:     item.json.message_id,\n      date:           item.json.date,\n      // Add parsed LLM fields\n      recruiter_name: parsed.recruiter_name || '',\n      company_name:   parsed.company_name || '',\n      position_title: parsed.position_title || '',\n      email_type:     parsed.email_type || '',\n      summary:        parsed.summary || '',\n    }\n  });\n}\n\nreturn items_out;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1376,
+        -384
+      ],
+      "id": "5f165d4d-e01b-4095-a434-d2bce19ccf66",
+      "name": "Parse LLM Response"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "LinkedIn Filter": {
+      "main": [
+        [
+          {
+            "node": "Less than 4 weeks old",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mark Read: Non-LinkedIn",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Less than 4 weeks old": {
+      "main": [
+        [
+          {
+            "node": "Extract LinkedIn Data",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Delete Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Daily Schedule": {
+      "main": [
+        [
+          {
+            "node": "Fetch (25) Unread emails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch (25) Unread emails": {
+      "main": [
+        [
+          {
+            "node": "Email Normalizer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Normalizer": {
+      "main": [
+        [
+          {
+            "node": "LinkedIn Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Message": {
+      "main": [
+        []
+      ]
+    },
+    "Ollama Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Extract LinkedIn Data",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract LinkedIn Data": {
+      "main": [
+        [
+          {
+            "node": "Parse LLM Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "b2c3fbfe-2f0b-47bd-9db2-e42cb49ad410",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ccadacc066e5bff871641d85f611fa8247e3be9f8389d8f0d1634c6d9fef7694"
+  },
+  "id": "y5zV6kpQ2lbO8dwG",
+  "tags": []
+}

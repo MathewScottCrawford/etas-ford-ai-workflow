@@ -1,0 +1,22 @@
+pipeline {
+    agent { docker { image 'python:3.11-slim' } }
+    stages {
+        stage('Checkout') { steps { checkout scm } }
+        stage('Lint') {
+            steps {
+                sh 'pip install ruff -q'
+                sh 'ruff check agents/ scripts/'
+            }
+        }
+        stage('Unit Tests') {
+            steps {
+                sh 'pip install pytest fastapi pydantic -q'
+                sh 'pytest agents/ -v'
+            }
+        }
+        stage('ARXML Diff Smoke Test') {
+            steps { sh 'python scripts/arxml_diff.py --help' }
+        }
+    }
+    post { always { cleanWs() } }
+}

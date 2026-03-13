@@ -1,0 +1,94 @@
+{
+  "name": "AUTOSAR ARXML Review Trigger",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "arxml-review",
+        "responseMode": "responseNode"
+      },
+      "name": "Webhook — ARXML diff received",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://config-agent:8001/review",
+        "method": "POST",
+        "bodyParametersJson": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "name": "Config Agent — ARXML lint",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [460, 300],
+      "notes": "Calls LangGraph config_agent FastAPI service. Returns structured review with confidence_score and traceability_refs."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $json.confidence_score }}",
+              "operation": "smallerEqual",
+              "value2": 0.75
+            }
+          ]
+        }
+      },
+      "name": "Low confidence? Route to human",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [680, 300],
+      "notes": "ISO 26262 gate: any AI output below 75% confidence requires human review before proceeding."
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "summary": "=AI ARXML Review — Human Approval Required",
+        "description": "={{ $json.rationale }}\n\nTraceability refs: {{ $json.traceability_refs }}\nConfidence: {{ $json.confidence_score }}"
+      },
+      "name": "Create Jira review ticket",
+      "type": "n8n-nodes-base.jira",
+      "typeVersion": 1,
+      "position": [900, 200],
+      "notes": "Creates a Jira ticket for human review. Ticket is linked to DOORS requirement via traceability_refs."
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ status: 'approved', auto_processed: true, result: $json }) }}"
+      },
+      "name": "Auto-approve and respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [900, 400],
+      "notes": "High-confidence results returned directly. Still logged for audit trail."
+    }
+  ],
+  "connections": {
+    "Webhook — ARXML diff received": {
+      "main": [[{ "node": "Config Agent — ARXML lint", "type": "main", "index": 0 }]]
+    },
+    "Config Agent — ARXML lint": {
+      "main": [[{ "node": "Low confidence? Route to human", "type": "main", "index": 0 }]]
+    },
+    "Low confidence? Route to human": {
+      "main": [
+        [{ "node": "Create Jira review ticket", "type": "main", "index": 0 }],
+        [{ "node": "Auto-approve and respond", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "saveManualExecutions": true,
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all"
+  },
+  "_meta": {
+    "description": "AUTOSAR ARXML review workflow. Receives ARXML diffs via webhook, routes to config_agent LangGraph service, applies ISO 26262 confidence gate, creates Jira ticket for human review when needed.",
+    "version": "0.1.0",
+    "safety_note": "No AI output auto-committed to ARXML baseline. Human approval required per ADR-001."
+  }
+}

@@ -1,12 +1,40 @@
 """
-Config Agent — LangGraph state machine
-Performs multi-step AUTOSAR ARXML configuration review.
+=============================================================================
+File:    agents/config_agent/graph.py
+Project: AI-Assisted Automotive Software Engineering Workflow
+Author:  Mathew S. Crawford
+Contact: mathew.s.crawford@gmail.com | 734-765-4143
+         linkedin.com/in/mathewscrawford
+GitHub:  github.com/MathewScottCrawford/etas-ford-ai-workflow
+License: MIT
+Purpose: LangGraph 3-step ARXML review state machine
+=============================================================================
 """
 
 from typing import TypedDict, Optional
+import json
+import re
 from langgraph.graph import StateGraph, END
-from shared.llm_client import get_llm
-from shared.safety_guardrails import validate_output
+from ..shared.llm_client import get_llm
+from ..shared.safety_guardrails import validate_output
+
+
+def clean_json(text: str) -> str:
+    """
+    Strip markdown fences and whitespace from LLM output before JSON parsing.
+    Handles ```json ... ```, ``` ... ```, and bare JSON with leading/trailing text.
+    """
+    # Remove fenced code blocks (```json ... ``` or ``` ... ```)
+    text = re.sub(r"```(?:json)?\s*", "", text)
+    text = text.replace("```", "")
+    # Strip leading/trailing whitespace and newlines
+    text = text.strip()
+    # If the model added explanation before/after the JSON, extract just the
+    # first [...] or {...} block
+    match = re.search(r"(\[.*\]|\{.*\})", text, re.DOTALL)
+    if match:
+        text = match.group(1)
+    return text
 
 
 class ConfigReviewState(TypedDict):
@@ -28,24 +56,26 @@ class ConfigReviewState(TypedDict):
 async def parse_arxml_changes(state: ConfigReviewState) -> ConfigReviewState:
     """Step 1: Parse the ARXML diff into structured change list."""
     llm = get_llm()
-    prompt = f"""
-You are an AUTOSAR BSW configuration expert. Parse the following ARXML diff
-and return a JSON list of changes. Each change should have:
-- element: the AUTOSAR element type (e.g. IPdu, ComSignal, OsTask)
-- change_type: added | removed | modified
-- path: ARXML path
-- summary: one-sentence description
+    prompt = f"""You are an AUTOSAR BSW configuration expert. Parse the following ARXML diff
+and return a JSON array of changes. Each object must have exactly these keys:
+  "element"     - AUTOSAR element type (e.g. I-SIGNAL, I-PDU, TASK, DID)
+  "change_type" - one of: added | removed | modified
+  "path"        - ARXML element path
+  "summary"     - one sentence describing the change
 
 ARXML diff:
 {state['arxml_diff']}
 
 Module context: {state.get('module', 'unknown')}
-Return only valid JSON, no markdown.
-"""
+
+IMPORTANT: Return ONLY the raw JSON array. No markdown. No backticks. No explanation.
+Start your response with [ and end with ]."""
+
     response = await llm.ainvoke(prompt)
-    import json
     try:
-        parsed = json.loads(response.content)
+        parsed = json.loads(clean_json(response.content))
+        if not isinstance(parsed, list):
+            parsed = [parsed]
     except Exception:
         parsed = [{"element": "unknown", "change_type": "unknown",
                    "path": "/", "summary": response.content[:200]}]
@@ -56,8 +86,7 @@ async def assess_cross_module_risk(state: ConfigReviewState) -> ConfigReviewStat
     """Step 2: Identify cross-module integration risks from the changes."""
     llm = get_llm()
     changes_str = str(state.get("parsed_changes", []))
-    prompt = f"""
-You are an AUTOSAR integration expert reviewing changes for cross-module risks.
+    prompt = f"""You are an AUTOSAR integration expert reviewing changes for cross-module risks.
 Known risk patterns:
 - COM/PduR changes that affect buffer sizing in MemIf/NvM
 - OS task priority changes that affect timing of COM callbacks
@@ -69,13 +98,17 @@ Changes detected:
 
 Requirement references: {state.get('requirement_refs', [])}
 
-List any cross-module integration risks. Return a JSON list of risk strings.
-Return only valid JSON, no markdown.
-"""
+List any cross-module integration risks as a JSON array of strings.
+If there are no risks return an empty array: []
+
+IMPORTANT: Return ONLY the raw JSON array. No markdown. No backticks. No explanation.
+Start your response with [ and end with ]."""
+
     response = await llm.ainvoke(prompt)
-    import json
     try:
-        risks = json.loads(response.content)
+        risks = json.loads(clean_json(response.content))
+        if not isinstance(risks, list):
+            risks = [str(risks)]
     except Exception:
         risks = [response.content[:300]]
     return {**state, "cross_module_risks": risks}

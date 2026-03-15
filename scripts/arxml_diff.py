@@ -1,12 +1,14 @@
 """
-arxml_diff.py — ARXML change detection utility
-
-Compares two ARXML files and outputs a structured diff suitable for
-piping into the config_agent review workflow.
-
-Usage:
-    python arxml_diff.py baseline.arxml modified.arxml [--module COM]
-    python arxml_diff.py baseline.arxml modified.arxml --post http://localhost:8001/review
+=============================================================================
+File:    scripts/arxml_diff.py
+Project: AI-Assisted Automotive Software Engineering Workflow
+Author:  Mathew S. Crawford
+Contact: mathew.s.crawford@gmail.com | 734-765-4143
+         linkedin.com/in/mathewscrawford
+GitHub:  github.com/MathewScottCrawford/etas-ford-ai-workflow
+License: MIT
+Purpose: ARXML change detection utility — diffs two ARXML files
+=============================================================================
 """
 
 import argparse
@@ -20,20 +22,36 @@ AUTOSAR_NS = {"ar": "http://autosar.org/schema/r4.0"}
 
 
 def parse_arxml(path: str) -> dict:
-    """Parse ARXML file into a flat dict of {path: element_text}."""
+    """
+    Parse ARXML file into a flat dict of {path: element_text}.
+    Uses SHORT-NAME elements to build unique, human-readable paths
+    so sibling elements with the same tag don't overwrite each other.
+    """
     tree = ET.parse(path)
     root = tree.getroot()
     elements = {}
 
     def walk(node, path=""):
         tag = node.tag.split("}")[-1] if "}" in node.tag else node.tag
-        current_path = f"{path}/{tag}"
-        name = node.get("name") or node.get("NAME")
-        if name:
-            current_path = f"{current_path}[{name}]"
+
+        # Build a meaningful path segment:
+        # If this node has a SHORT-NAME child, use it as the key
+        short_name = None
+        for child in node:
+            child_tag = child.tag.split("}")[-1] if "}" in child.tag else child.tag
+            if child_tag == "SHORT-NAME" and child.text:
+                short_name = child.text.strip()
+                break
+
+        if short_name:
+            current_path = f"{path}/{tag}[{short_name}]"
+        else:
+            current_path = f"{path}/{tag}"
+
         text = (node.text or "").strip()
-        if text:
+        if text and tag != "SHORT-NAME":
             elements[current_path] = text
+
         for child in node:
             walk(child, current_path)
 
@@ -59,9 +77,16 @@ def diff_arxml(baseline_path: str, modified_path: str,
     }
 
     if module:
-        added   = {k: v for k, v in added.items()   if module.upper() in k.upper()}
-        removed = {k: v for k, v in removed.items() if module.upper() in k.upper()}
-        changed = {k: v for k, v in changed.items() if module.upper() in k.upper()}
+        # Match paths whose AR-PACKAGE name contains the module string
+        # e.g. --module OS matches AR-PACKAGE[OS_Config] but not COM_Config
+        import re
+        pattern = re.compile(
+            r'AR-PACKAGE\[[^\]]*' + re.escape(module.upper()) + r'[^\]]*\]',
+            re.IGNORECASE
+        )
+        added   = {k: v for k, v in added.items()   if pattern.search(k)}
+        removed = {k: v for k, v in removed.items() if pattern.search(k)}
+        changed = {k: v for k, v in changed.items() if pattern.search(k)}
 
     return {
         "summary": {

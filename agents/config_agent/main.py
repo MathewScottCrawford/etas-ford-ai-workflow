@@ -1,12 +1,20 @@
 """
-Config Agent — FastAPI entrypoint
-Handles AUTOSAR ARXML configuration review requests via LangGraph.
+=============================================================================
+File:    agents/config_agent/main.py
+Project: AI-Assisted Automotive Software Engineering Workflow
+Author:  Mathew S. Crawford
+Contact: mathew.s.crawford@gmail.com | 734-765-4143
+         linkedin.com/in/mathewscrawford
+GitHub:  github.com/MathewScottCrawford/etas-ford-ai-workflow
+License: MIT
+Purpose: FastAPI entrypoint for ARXML config review agent
+=============================================================================
 """
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import Optional
-from graph import run_config_review
+from .graph import run_config_review
 
 app = FastAPI(
     title="Config Agent",

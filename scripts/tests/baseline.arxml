@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+=============================================================================
+File:    scripts/tests/baseline.arxml
+Project: AI-Assisted Automotive Software Engineering Workflow
+Author:  Mathew S. Crawford
+Contact: mathew.s.crawford@gmail.com | 734-765-4143
+         linkedin.com/in/mathewscrawford
+GitHub:  github.com/MathewScottCrawford/etas-ford-ai-workflow
+License: MIT
+Purpose: Sample ARXML baseline for arxml_diff.py testing
+=============================================================================
+-->
+<AUTOSAR xmlns="http://autosar.org/schema/r4.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://autosar.org/schema/r4.0 AUTOSAR_00048.xsd">
+  <AR-PACKAGES>
+
+    <!-- ── ECU Instance ─────────────────────────────────────────────────── -->
+    <AR-PACKAGE>
+      <SHORT-NAME>EcuInstance</SHORT-NAME>
+      <ELEMENTS>
+        <ECU-INSTANCE>
+          <SHORT-NAME>ECU_Powertrain</SHORT-NAME>
+          <COMM-CONTROLLERS>
+            <COM-CONTROLLER>
+              <SHORT-NAME>CAN_Controller_0</SHORT-NAME>
+              <ECU-COM-PORT-INSTANCES/>
+            </COM-CONTROLLER>
+          </COMM-CONTROLLERS>
+        </ECU-INSTANCE>
+      </ELEMENTS>
+    </AR-PACKAGE>
+
+    <!-- ── COM Stack ────────────────────────────────────────────────────── -->
+    <AR-PACKAGE>
+      <SHORT-NAME>COM_Config</SHORT-NAME>
+      <ELEMENTS>
+
+        <!-- Signal: EngineSpeed -->
+        <I-SIGNAL>
+          <SHORT-NAME>EngineSpeed_Sig</SHORT-NAME>
+          <LENGTH>16</LENGTH>
+          <INIT-VALUE>
+            <NUMERICAL-VALUE-SPECIFICATION>
+              <VALUE>0</VALUE>
+            </NUMERICAL-VALUE-SPECIFICATION>
+          </INIT-VALUE>
+          <TRANSFER-PROPERTY>TRIGGERED</TRANSFER-PROPERTY>
+        </I-SIGNAL>
+
+        <!-- Signal: VehicleSpeed -->
+        <I-SIGNAL>
+          <SHORT-NAME>VehicleSpeed_Sig</SHORT-NAME>
+          <LENGTH>16</LENGTH>
+          <INIT-VALUE>
+            <NUMERICAL-VALUE-SPECIFICATION>
+              <VALUE>0</VALUE>
+            </NUMERICAL-VALUE-SPECIFICATION>
+          </INIT-VALUE>
+          <TRANSFER-PROPERTY>TRIGGERED</TRANSFER-PROPERTY>
+        </I-SIGNAL>
+
+        <!-- Signal: ThrottlePosition -->
+        <I-SIGNAL>
+          <SHORT-NAME>ThrottlePosition_Sig</SHORT-NAME>
+          <LENGTH>8</LENGTH>
+          <INIT-VALUE>
+            <NUMERICAL-VALUE-SPECIFICATION>
+              <VALUE>0</VALUE>
+            </NUMERICAL-VALUE-SPECIFICATION>
+          </INIT-VALUE>
+          <TRANSFER-PROPERTY>TRIGGERED</TRANSFER-PROPERTY>
+        </I-SIGNAL>
+
+        <!-- PDU: Powertrain Status PDU -->
+        <I-PDU>
+          <SHORT-NAME>PT_Status_PDU</SHORT-NAME>
+          <LENGTH>8</LENGTH>
+          <PDU-TO-FRAME-MAPPING>
+            <SHORT-NAME>PT_Status_Mapping</SHORT-NAME>
+          </PDU-TO-FRAME-MAPPING>
+        </I-PDU>
+
+        <!-- PDU: Engine Control PDU -->
+        <I-PDU>
+          <SHORT-NAME>Engine_Control_PDU</SHORT-NAME>
+          <LENGTH>8</LENGTH>
+          <PDU-TO-FRAME-MAPPING>
+            <SHORT-NAME>Engine_Control_Mapping</SHORT-NAME>
+          </PDU-TO-FRAME-MAPPING>
+        </I-PDU>
+
+      </ELEMENTS>
+    </AR-PACKAGE>
+
+    <!-- ── OS Configuration ─────────────────────────────────────────────── -->
+    <AR-PACKAGE>
+      <SHORT-NAME>OS_Config</SHORT-NAME>
+      <ELEMENTS>
+
+        <OS-APPLICATION>
+          <SHORT-NAME>OsApp_Powertrain</SHORT-NAME>
+          <TRUSTED>true</TRUSTED>
+        </OS-APPLICATION>
+
+        <TASK>
+          <SHORT-NAME>OsTask_10ms</SHORT-NAME>
+          <PRIORITY>5</PRIORITY>
+          <PERIOD>10</PERIOD>
+          <ACTIVATION>1</ACTIVATION>
+          <STACK-SIZE>512</STACK-SIZE>
+        </TASK>
+
+        <TASK>
+          <SHORT-NAME>OsTask_100ms</SHORT-NAME>
+          <PRIORITY>3</PRIORITY>
+          <PERIOD>100</PERIOD>
+          <ACTIVATION>1</ACTIVATION>
+          <STACK-SIZE>512</STACK-SIZE>
+        </TASK>
+
+      </ELEMENTS>
+    </AR-PACKAGE>
+
+    <!-- ── DCM / Diagnostics ─────────────────────────────────────────────── -->
+    <AR-PACKAGE>
+      <SHORT-NAME>DCM_Config</SHORT-NAME>
+      <ELEMENTS>
+
+        <DIAGNOSTIC-DATA-IDENTIFIER>
+          <SHORT-NAME>DID_0xF190</SHORT-NAME>
+          <IDENTIFIER>61840</IDENTIFIER>
+          <DATA-LENGTH>17</DATA-LENGTH>
+        </DIAGNOSTIC-DATA-IDENTIFIER>
+
+        <DIAGNOSTIC-DATA-IDENTIFIER>
+          <SHORT-NAME>DID_0xF187</SHORT-NAME>
+          <IDENTIFIER>61831</IDENTIFIER>
+          <DATA-LENGTH>10</DATA-LENGTH>
+        </DIAGNOSTIC-DATA-IDENTIFIER>
+
+        <DIAGNOSTIC-SESSION>
+          <SHORT-NAME>DefaultSession</SHORT-NAME>
+          <SESSION-LEVEL>1</SESSION-LEVEL>
+        </DIAGNOSTIC-SESSION>
+
+        <DIAGNOSTIC-SESSION>
+          <SHORT-NAME>ProgrammingSession</SHORT-NAME>
+          <SESSION-LEVEL>2</SESSION-LEVEL>
+        </DIAGNOSTIC-SESSION>
+
+      </ELEMENTS>
+    </AR-PACKAGE>
+
+  </AR-PACKAGES>
+</AUTOSAR>

@@ -1,6 +1,14 @@
 """
-Ollama LLM client wrapper
-Provides a consistent interface to local Ollama inference for all agents.
+=============================================================================
+File:    agents/shared/llm_client.py
+Project: AI-Assisted Automotive Software Engineering Workflow
+Author:  Mathew S. Crawford
+Contact: mathew.s.crawford@gmail.com | 734-765-4143
+         linkedin.com/in/mathewscrawford
+GitHub:  github.com/MathewScottCrawford/etas-ford-ai-workflow
+License: MIT
+Purpose: Shared Ollama LLM client wrapper for all agents
+=============================================================================
 """
 
 import os

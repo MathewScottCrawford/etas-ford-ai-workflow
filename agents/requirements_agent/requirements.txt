@@ -1,10 +1,10 @@
 # =============================================================================
-# File:    agents/config_agent/requirements.txt
+# File:    agents/requirements_agent/requirements.txt
 # Project: AI-Assisted Automotive Software Engineering Workflow
 # Author:  Mathew S. Crawford | mathew.s.crawford@gmail.com
 # GitHub:  github.com/MathewScottCrawford/etas-ford-ai-workflow
 # License: MIT
-# Purpose: Python dependencies for config_agent
+# Purpose: Python dependencies for requirements_agent
 # =============================================================================
 
 fastapi>=0.111.0
@@ -12,3 +12,4 @@ uvicorn>=0.29.0
 langgraph>=0.1.0
 langchain-ollama>=0.1.0
 pydantic>=2.0.0
+python-multipart>=0.0.9

@@ -1,3 +1,15 @@
+# =============================================================================
+# File:    workflows/jenkins/Jenkinsfile
+# Project: AI-Assisted Automotive Software Engineering Workflow
+# Author:  Mathew S. Crawford
+# Contact: mathew.s.crawford@gmail.com | 734-765-4143
+#          linkedin.com/in/mathewscrawford
+# GitHub:  github.com/MathewScottCrawford/etas-ford-ai-workflow
+# License: MIT
+# Purpose: Jenkins CI/CD pipeline definition
+# =============================================================================
+
+
 pipeline {
     agent { docker { image 'python:3.11-slim' } }
     stages {

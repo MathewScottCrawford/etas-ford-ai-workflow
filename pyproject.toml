@@ -1,0 +1,39 @@
+# =============================================================================
+# File:    pyproject.toml
+# Project: AI-Assisted Automotive Software Engineering Workflow
+# Author:  Mathew S. Crawford
+# Contact: mathew.s.crawford@gmail.com | 734-765-4143
+#          linkedin.com/in/mathewscrawford
+# GitHub:  github.com/MathewScottCrawford/etas-ford-ai-workflow
+# License: MIT
+# Purpose: Package configuration and editable install for agent microservices
+# =============================================================================
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "etas-ford-agents"
+version = "0.1.0"
+description = "AI-assisted automotive software engineering agents — ETAS/Ford"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "Mathew S. Crawford", email = "mathew.s.crawford@gmail.com"}
+]
+dependencies = [
+    "fastapi>=0.111.0",
+    "uvicorn>=0.29.0",
+    "langgraph>=0.1.0",
+    "langchain-ollama>=0.1.0",
+    "pydantic>=2.0.0",
+    "python-multipart>=0.0.9",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["agents*"]
+
+[tool.setuptools.package-dir]
+"" = "."

@@ -1,0 +1,17 @@
+# File:    agents/requirements_agent/tests/sample_doors_export.csv
+# Project: AI-Assisted Automotive Software Engineering Workflow
+# Author:  Mathew S. Crawford | mathew.s.crawford@gmail.com
+# GitHub:  github.com/MathewScottCrawford/etas-ford-ai-workflow
+# License: MIT
+# Purpose: Sample IBM DOORS CSV export for requirements_agent testing
+Object ID,Object Text,Object Type,Allocated To,Status,Verification Method,Rationale
+SWR-COM-001,The COM module shall transmit PDUs on the CAN bus within 10 milliseconds of the triggering event.,Functional,COM / PduR,Draft,Test,OEM timing requirement derived from system requirement SYS-NET-042.
+SWR-COM-002,The COM module shall handle bus-off recovery in an appropriate manner.,Functional,COM / ComM,Draft,Test,
+SWR-DCM-001,The DCM module shall support UDS service 0x22 (ReadDataByIdentifier) for all DIDs defined in the ODX file.,Functional,DCM,Approved,Test,Required for end-of-line tester compatibility.
+SWR-DCM-002,The DCM module shall respond to diagnostic requests fast.,Functional,DCM,Draft,Test,
+SWR-OS-001,The AUTOSAR OS shall schedule OsTask_10ms with a period of 10 milliseconds and priority 5.,Functional,OS / SchM,Approved,Test,Derived from timing analysis TA-2024-003.
+SWR-OS-002,The AUTOSAR OS shall provide sufficient stack memory for all tasks.,Functional,OS,Draft,Review,TBD - stack sizes to be confirmed after integration.
+SWR-NVM-001,The NVM module shall persist all calibration data across ECU power cycles.,Functional,NvM / MemIf,Draft,Test,Required for production calibration retention.
+SWR-NVM-002,The NVM module shall be easy to configure and maintain.,Non-Functional,NvM,Draft,,
+SWR-MCAL-001,The MCAL SPI driver shall support a clock frequency of 1 MHz for communication with the external EEPROM.,Functional,MCAL / SPI,Approved,Test,Hardware interface requirement from HW team drawing HW-SPI-007.
+SWR-COM-003,The COM module shall support flexible and efficient PDU routing between CAN and LIN networks.,Functional,COM / PduR,Draft,Review,

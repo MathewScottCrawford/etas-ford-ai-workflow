@@ -1,4 +1,12 @@
 {
+  "_file": "workflows/n8n/email_catchup_workflow.json",
+  "_author": "Mathew S. Crawford | mathew.s.crawford@gmail.com | 734-765-4143",
+  "_linkedin": "linkedin.com/in/mathewscrawford",
+  "_project": "AI-Assisted Automotive Software Engineering Workflow \u2014 ETAS/Ford Motor Company",
+  "_github": "github.com/MathewScottCrawford/etas-ford-ai-workflow",
+  "_license": "MIT",
+  "_purpose": "n8n agentic workflow: daily Gmail catchup with LinkedIn recruiter extraction via Ollama phi4-mini",
+  "_provenance": "Baseline copied from MathewScottCrawford/ClaudeClass @ etas-ford-baseline tag. Original developed as standalone n8n learning project. Included here as working agentic prototype demonstrating same orchestration patterns used by AUTOSAR-focused agents in this repo.",
   "name": "email-catchup",
   "nodes": [
     {

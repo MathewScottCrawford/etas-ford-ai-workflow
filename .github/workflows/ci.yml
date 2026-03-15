@@ -1,3 +1,15 @@
+# =============================================================================
+# File:    .github/workflows/ci.yml
+# Project: AI-Assisted Automotive Software Engineering Workflow
+# Author:  Mathew S. Crawford
+# Contact: mathew.s.crawford@gmail.com | 734-765-4143
+#          linkedin.com/in/mathewscrawford
+# GitHub:  github.com/MathewScottCrawford/etas-ford-ai-workflow
+# License: MIT
+# Purpose: GitHub Actions CI pipeline — lint, test, validate
+# =============================================================================
+
+
 name: CI
 
 on:

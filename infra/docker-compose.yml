@@ -1,3 +1,15 @@
+# =============================================================================
+# File:    infra/docker-compose.yml
+# Project: AI-Assisted Automotive Software Engineering Workflow
+# Author:  Mathew S. Crawford
+# Contact: mathew.s.crawford@gmail.com | 734-765-4143
+#          linkedin.com/in/mathewscrawford
+# GitHub:  github.com/MathewScottCrawford/etas-ford-ai-workflow
+# License: MIT
+# Purpose: Docker Compose stack — n8n, Ollama, agent microservices
+# =============================================================================
+
+
 version: "3.9"
 
 services:

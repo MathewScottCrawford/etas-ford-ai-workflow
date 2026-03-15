@@ -1,3 +1,11 @@
+# =============================================================================
+# File:    .gitignore
+# Project: AI-Assisted Automotive Software Engineering Workflow
+# Author:  Mathew S. Crawford | mathew.s.crawford@gmail.com
+# GitHub:  github.com/MathewScottCrawford/etas-ford-ai-workflow
+# License: MIT
+# =============================================================================
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
@@ -138,6 +146,7 @@ celerybeat.pid
 .env
 .envrc
 .venv
+.venv-agents
 env/
 venv/
 ENV/

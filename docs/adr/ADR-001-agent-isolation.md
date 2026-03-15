@@ -1,5 +1,12 @@
 # ADR-001: Agent Isolation and Human Approval Gates
 
+> **File:** docs/adr/ADR-001-agent-isolation.md
+> **Project:** AI-Assisted Automotive Software Engineering Workflow — ETAS/Ford Motor Company
+> **Author:** Mathew S. Crawford | mathew.s.crawford@gmail.com | linkedin.com/in/mathewscrawford
+> **License:** MIT | github.com/MathewScottCrawford/etas-ford-ai-workflow
+
+
+
 **Date:** 2026-03-13  
 **Status:** Accepted  
 **Context:** AI-assisted AUTOSAR workflow for safety-critical automotive ECU development

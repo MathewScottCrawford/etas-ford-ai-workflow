@@ -1,3 +1,15 @@
+<!--
+=============================================================================
+File:    README.md
+Project: AI-Assisted Automotive Software Engineering Workflow
+Author:  Mathew S. Crawford
+Contact: mathew.s.crawford@gmail.com | 734-765-4143
+         linkedin.com/in/mathewscrawford
+GitHub:  github.com/MathewScottCrawford/etas-ford-ai-workflow
+License: MIT
+=============================================================================
+-->
+
 # AI-Assisted Automotive Software Engineering Workflow
 ### ETAS / Ford Motor Company — Reference Architecture
 
@@ -153,7 +165,7 @@ This prototype is designed with ISO 26262 and ASPICE traceability in mind:
 - [x] Safety guardrails module — ISO 26262 / MISRA output validation
 - [x] Docker Compose stack — n8n + Ollama + agent microservices
 - [x] GitHub Actions CI baseline
-- [ ] requirements_agent — DOORS gap analysis agent (v0.2.0)
+- [x] requirements_agent — DOORS CSV gap analysis agent (v0.1.0)
 - [ ] Jenkins pipeline integration (v0.2.0)
 - [ ] VectorCAST test result triage agent (v0.3.0)
 - [ ] ETAS RTA-CAR ARXML schema validation scripts (v0.3.0)

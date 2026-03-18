@@ -1,94 +1,253 @@
 {
-  "name": "AUTOSAR ARXML Review Trigger",
+  "name": "AUTOSAR ARXML Review",
+  "_author": "Mathew S. Crawford | mathew.s.crawford@gmail.com | 734-765-4143",
+  "_project": "AI-Assisted Automotive Software Engineering Workflow \u2014 ETAS/Ford Motor Company",
+  "_file": "workflows/n8n/autosar_review_workflow.json",
+  "_github": "github.com/MathewScottCrawford/etas-ford-ai-workflow",
+  "_license": "MIT",
+  "_purpose": "n8n workflow: AUTOSAR ARXML review trigger with ISO 26262 confidence gate and Gmail escalation",
+  "_meta": {
+    "description": "Receives ARXML diffs via webhook, routes to config_agent running on host via uvicorn, applies ISO 26262 confidence gate, sends Gmail notification when human review needed.",
+    "version": "0.2.0",
+    "safety_note": "No AI output auto-committed to ARXML baseline. Human approval required per ADR-001.",
+    "agent_mode": "uvicorn on host \u2014 use host.docker.internal:8001. Switch to config-agent:8001 when running via Docker Compose."
+  },
   "nodes": [
     {
       "parameters": {
         "httpMethod": "POST",
         "path": "arxml-review",
-        "responseMode": "responseNode"
+        "responseMode": "responseNode",
+        "options": {}
       },
-      "name": "Webhook — ARXML diff received",
+      "id": "node-webhook",
+      "name": "Webhook \u2014 ARXML diff received",
       "type": "n8n-nodes-base.webhook",
-      "typeVersion": 1,
-      "position": [240, 300]
+      "typeVersion": 2,
+      "position": [
+        240,
+        300
+      ],
+      "notes": "POST body: { arxml_diff, module, requirement_refs, context }"
     },
     {
       "parameters": {
-        "url": "http://config-agent:8001/review",
         "method": "POST",
-        "bodyParametersJson": "={{ JSON.stringify($json) }}",
-        "options": {}
+        "url": "http://host.docker.internal:8001/review",
+        "sendBody": true,
+        "bodyContentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify(.body) }}",
+        "options": {
+          "timeout": 30000
+        }
       },
-      "name": "Config Agent — ARXML lint",
+      "id": "node-config-agent",
+      "name": "Config Agent \u2014 ARXML review",
       "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 3,
-      "position": [460, 300],
-      "notes": "Calls LangGraph config_agent FastAPI service. Returns structured review with confidence_score and traceability_refs."
+      "typeVersion": 4,
+      "position": [
+        460,
+        300
+      ],
+      "notes": "Calls config_agent FastAPI on host port 8001. Timeout 30s to allow LLM inference."
     },
     {
       "parameters": {
         "conditions": {
-          "number": [
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
             {
-              "value1": "={{ $json.confidence_score }}",
-              "operation": "smallerEqual",
-              "value2": 0.75
+              "id": "confidence-check",
+              "leftValue": "={{ .human_review_required }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equal"
+              }
             }
-          ]
-        }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
       },
-      "name": "Low confidence? Route to human",
+      "id": "node-confidence-gate",
+      "name": "Human review required?",
       "type": "n8n-nodes-base.if",
-      "typeVersion": 1,
-      "position": [680, 300],
-      "notes": "ISO 26262 gate: any AI output below 75% confidence requires human review before proceeding."
+      "typeVersion": 2,
+      "position": [
+        680,
+        300
+      ],
+      "notes": "ISO 26262 gate: routes to Gmail notification if human_review_required=true (confidence < 0.75 or error severity)"
     },
     {
       "parameters": {
-        "operation": "create",
-        "summary": "=AI ARXML Review — Human Approval Required",
-        "description": "={{ $json.rationale }}\n\nTraceability refs: {{ $json.traceability_refs }}\nConfidence: {{ $json.confidence_score }}"
+        "sendTo": "mathew.s.crawford@gmail.com",
+        "subject": "=\u26a0\ufe0f ARXML Review \u2014 Human Approval Required | Confidence: {{ .confidence_score }}",
+        "emailType": "html",
+        "message": "=<h2>AUTOSAR ARXML Review \u2014 Human Approval Required</h2><p><b>Confidence score:</b> {{ .confidence_score }}</p><p><b>Rationale:</b> {{ .rationale }}</p><p><b>Traceability refs:</b> {{ .traceability_refs.join(', ') }}</p><h3>Findings</h3><pre>{{ JSON.stringify(.findings, null, 2) }}</pre><hr><p><i>AI-assisted output. Human approval required before baseline entry per ADR-001.</i></p>",
+        "options": {}
       },
-      "name": "Create Jira review ticket",
-      "type": "n8n-nodes-base.jira",
-      "typeVersion": 1,
-      "position": [900, 200],
-      "notes": "Creates a Jira ticket for human review. Ticket is linked to DOORS requirement via traceability_refs."
+      "id": "node-gmail-notify",
+      "name": "Gmail \u2014 Human review notification",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [
+        900,
+        180
+      ],
+      "notes": "Sends structured review findings to mathew.s.crawford@gmail.com when human review required. Replace with Jira when credentials available.",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "TGI9tkxrOLW4HssB",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "status-field",
+              "name": "status",
+              "value": "human_review_required",
+              "type": "string"
+            },
+            {
+              "id": "notification-field",
+              "name": "notification_sent",
+              "value": true,
+              "type": "boolean"
+            },
+            {
+              "id": "confidence-field",
+              "name": "confidence_score",
+              "value": "={{ .confidence_score }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-set-review-status",
+      "name": "Set \u2014 review status",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [
+        1120,
+        180
+      ],
+      "notes": "Formats response after Gmail notification sent."
     },
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ JSON.stringify({ status: 'approved', auto_processed: true, result: $json }) }}"
+        "responseBody": "={{ JSON.stringify({ status: \"auto_approved\", confidence_score: .confidence_score, findings_count: .findings.length, human_review_required: false, ai_assisted: true }) }}",
+        "options": {}
       },
-      "name": "Auto-approve and respond",
+      "id": "node-auto-approve",
+      "name": "Auto-approve \u2014 respond to caller",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
-      "position": [900, 400],
-      "notes": "High-confidence results returned directly. Still logged for audit trail."
+      "position": [
+        900,
+        420
+      ],
+      "notes": "High-confidence results auto-approved. Logged in n8n execution history for audit trail."
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ status: \"pending_human_review\", confidence_score: .confidence_score, notification: \"Email sent to mathew.s.crawford@gmail.com\", human_review_required: true }) }}",
+        "options": {}
+      },
+      "id": "node-respond-review",
+      "name": "Respond \u2014 pending review",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1340,
+        180
+      ],
+      "notes": "Returns pending status to caller. Caller should poll or wait for manual approval."
     }
   ],
   "connections": {
-    "Webhook — ARXML diff received": {
-      "main": [[{ "node": "Config Agent — ARXML lint", "type": "main", "index": 0 }]]
-    },
-    "Config Agent — ARXML lint": {
-      "main": [[{ "node": "Low confidence? Route to human", "type": "main", "index": 0 }]]
-    },
-    "Low confidence? Route to human": {
+    "Webhook \u2014 ARXML diff received": {
       "main": [
-        [{ "node": "Create Jira review ticket", "type": "main", "index": 0 }],
-        [{ "node": "Auto-approve and respond", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Config Agent \u2014 ARXML review",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config Agent \u2014 ARXML review": {
+      "main": [
+        [
+          {
+            "node": "Human review required?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Human review required?": {
+      "main": [
+        [
+          {
+            "node": "Gmail \u2014 Human review notification",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Auto-approve \u2014 respond to caller",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail \u2014 Human review notification": {
+      "main": [
+        [
+          {
+            "node": "Set \u2014 review status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set \u2014 review status": {
+      "main": [
+        [
+          {
+            "node": "Respond \u2014 pending review",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     }
   },
   "settings": {
     "saveManualExecutions": true,
     "saveDataSuccessExecution": "all",
-    "saveDataErrorExecution": "all"
+    "saveDataErrorExecution": "all",
+    "executionOrder": "v1"
   },
-  "_meta": {
-    "description": "AUTOSAR ARXML review workflow. Receives ARXML diffs via webhook, routes to config_agent LangGraph service, applies ISO 26262 confidence gate, creates Jira ticket for human review when needed.",
-    "version": "0.1.0",
-    "safety_note": "No AI output auto-committed to ARXML baseline. Human approval required per ADR-001."
-  }
+  "active": false
 }

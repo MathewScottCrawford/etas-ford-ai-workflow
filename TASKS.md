@@ -14,14 +14,20 @@ last-updated: 2026-03-19
 
 ## Active
 
-- [ ] requirements_agent E2E test (port 8002, sample_doors_export.csv)
-- [ ] n8n AUTOSAR review workflow — import and test
-- [ ] Docker Compose full stack — compose up verification
+- [ ] Fix n8n HTTP Request timeout 30000 → 300000ms, republish, retest
+- [ ] Export updated autosar_review_workflow.json from n8n after timeout fix
+- [ ] requirements_agent E2E test (port 8002 running, sample_doors_export.csv)
+- [ ] Commit — Dockerfiles, docker-compose.yml, workflow JSON
 - [ ] GitHub Actions CI — trigger via push
-- [ ] Jenkinsfile — needs Jenkins instance to test
 
 ## Recently Completed
 
+- [x] Docker Compose full stack verified — all 3 containers healthy
+- [x] n8n existing workflows restored (n8n_n8n_data external volume)
+- [x] AUTOSAR review workflow imported and published in n8n
+- [x] Pipeline reaching Ollama — blocked only by 30s timeout
+- [x] agent Dockerfiles written (config_agent, requirements_agent)
+- [x] docker-compose.yml updated — removed Ollama service, host.docker.internal
 - [x] config_agent E2E tested (7-change COM diff, confidence 0.8, < 5s)
 - [x] arxml_diff.py tested (COM/OS/DCM module filter verified)
 - [x] clean_json() fix — LLM markdown fence stripping in both agents

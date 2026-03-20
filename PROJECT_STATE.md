@@ -216,3 +216,13 @@ docker compose -f infra/docker-compose.yml stop
 **Decisions made:** None (fixes only)
 
 **Next session start:** Republish workflow in n8n → retest with curl → requirements_agent E2E
+
+### 2026-03-20 — n8n IF Node Fix (Human Review Gate)
+**Completed:**
+- FIX 3: "Human review required?" IF node — broken expression `={{ .human_review_required }}` → `={{ $json.human_review_required }}`. Missing `$json` prefix caused "invalid syntax" errors, breaking the ISO 26262 confidence gate (ADR-001).
+- Operator updated from `equal` (with rightValue) to `true` (singleValue) — correct n8n v2 IF boolean check.
+- Removed duplicate/broken condition entries — single clean condition remains.
+
+**Decisions made:** None (bug fix only)
+
+**Next session start:** Republish workflow in n8n → retest full pipeline with curl → requirements_agent E2E

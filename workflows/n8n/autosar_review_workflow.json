@@ -64,12 +64,13 @@
           "conditions": [
             {
               "id": "confidence-check",
-              "leftValue": "={{ .human_review_required }}",
-              "rightValue": true,
+              "leftValue": "={{ $json.human_review_required }}",
+              "rightValue": "",
               "operator": {
                 "type": "boolean",
-                "operation": "equal"
-              }
+                "operation": "true"
+              },
+              "singleValue": true
             }
           ],
           "combinator": "and"

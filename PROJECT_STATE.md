@@ -41,9 +41,12 @@
 
 Priority order:
 
-- [ ] **Fix n8n HTTP Request timeout** — Config Agent node: change timeout
-      from 30000ms to 300000ms (5 min). Republish workflow. Retest with curl.
+- [x] **Fix n8n HTTP Request timeout** — Config Agent node: changed timeout
+      from 30000ms to 600000ms (10 min). Republish workflow. Retest with curl.
       Then export updated JSON to `workflows/n8n/autosar_review_workflow.json`.
+- [ ] **Pre-warm Ollama before workflow run** — Add a startup step (script or
+      n8n node) that sends a lightweight prompt to phi4-mini so the model is
+      loaded before the first real review request hits.
 - [ ] **requirements_agent E2E test** — containers already running on port 8002.
       Use Swagger UI at `http://localhost:8002/docs`, upload
       `agents/requirements_agent/tests/sample_doors_export.csv` to `/analyze/csv`.
@@ -140,10 +143,11 @@ first, then recompile CLAUDE.md.
 ## Known Issues / Watch Points
 
 - **phi4-mini cold start:** ~35 second model load + 4 min first inference.
-  n8n timeout was 30s — fix to 300000ms (5 min) is the immediate next task.
+  n8n timeout was 30s — fixed to 600000ms (10 min).
   Subsequent calls while model is warm: ~2 min.
-- **n8n webhook body:** Payload lands in `$json.body`, not `$json`.
-  Always use `{{ $json.body }}` in HTTP Request node JSON field.
+- **n8n Config Agent JSON body:** The Config Agent HTTP Request node's
+  jsonBody field must use `={{ $json.body }}` to forward the webhook payload.
+  The old expression (`{{ JSON.stringify(.body) }}`) caused 422 errors.
 - **Git Bash path mangling:** `/data` gets mangled. Use `//data` or
   `winpty` prefix, or use PowerShell.
 - **requirements_agent prompt tuning:** Unknown whether phi4-mini handles
@@ -202,3 +206,13 @@ docker compose -f infra/docker-compose.yml stop
 - Nimbalyst installed
 
 **Next session start:** Fix n8n timeout → test full pipeline E2E
+
+### 2026-03-20 — n8n Workflow Fixes (Timeout + JSON Body)
+**Completed:**
+- FIX 1: Config Agent node timeout increased from 30000ms to 600000ms (10 min)
+- FIX 2: Config Agent node jsonBody fixed — `{{ JSON.stringify(.body) }}` → `{{ $json.body }}`
+- PROJECT_STATE.md updated — Known Issues, Active Tasks, Session Log
+
+**Decisions made:** None (fixes only)
+
+**Next session start:** Republish workflow in n8n → retest with curl → requirements_agent E2E

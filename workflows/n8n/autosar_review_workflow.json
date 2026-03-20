@@ -39,7 +39,7 @@
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify(.body) }}",
         "options": {
-          "timeout": 30000
+          "timeout": 300000
         }
       },
       "id": "node-config-agent",
@@ -50,7 +50,7 @@
         460,
         300
       ],
-      "notes": "Calls config_agent FastAPI on host port 8001. Timeout 30s to allow LLM inference."
+      "notes": "Calls config_agent FastAPI on host port 8001. Timeout 300s (5 min) to allow phi4-mini cold start + LLM inference."
     },
     {
       "parameters": {

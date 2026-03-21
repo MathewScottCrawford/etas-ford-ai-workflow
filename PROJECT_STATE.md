@@ -41,19 +41,21 @@
 
 Priority order:
 
-- [x] **Fix n8n HTTP Request timeout** — Config Agent node: changed timeout
-      from 30000ms to 600000ms (10 min). Republish workflow. Retest with curl.
-      Then export updated JSON to `workflows/n8n/autosar_review_workflow.json`.
-- [ ] **Pre-warm Ollama before workflow run** — Add a startup step (script or
-      n8n node) that sends a lightweight prompt to phi4-mini so the model is
-      loaded before the first real review request hits.
-- [ ] **requirements_agent E2E test** — containers already running on port 8002.
-      Use Swagger UI at `http://localhost:8002/docs`, upload
-      `agents/requirements_agent/tests/sample_doors_export.csv` to `/analyze/csv`.
-- [ ] **Export updated autosar_review_workflow.json** from n8n after timeout fix.
+- [ ] **Fix ALL missing $ prefix in workflow JSON** — Nimbalyst session:
+      audit entire autosar_review_workflow.json for `={{ .*\.[a-z]` pattern,
+      fix all instances in one pass. Known affected nodes: Auto-approve,
+      Respond — pending review, Gmail notification. Also add
+      `"typeValidation": "loose"` to IF node options.
+- [ ] **Add CI linter for n8n expression syntax** — new file
+      `scripts/lint_n8n_workflows.py` that greps workflow JSON files for
+      missing `$` prefix pattern (`={{ *\.[a-zA-Z]`). Add as step in
+      `.github/workflows/ci.yml`. This is the regression test.
+- [ ] **Export corrected workflow JSON** from n8n after fixes verified.
+- [ ] **Update Nimbalyst** — version 0.56.6 available, install failed.
+      Try running installer as administrator from:
+      `C:\Users\Mat\AppData\Local\@nimbalystelect ron-updater\pending\`
+- [ ] **requirements_agent E2E test** — containers running on port 8002.
 - [ ] **GitHub Actions CI** — trigger by pushing a commit, verify green.
-- [ ] **Commit** — CLAUDE.md, PROJECT_STATE.md, Dockerfiles,
-      docker-compose.yml, workflow JSON.
 
 ---
 
@@ -143,11 +145,10 @@ first, then recompile CLAUDE.md.
 ## Known Issues / Watch Points
 
 - **phi4-mini cold start:** ~35 second model load + 4 min first inference.
-  n8n timeout was 30s — fixed to 600000ms (10 min).
+  n8n timeout was 30s — fix to 300000ms (5 min) is the immediate next task.
   Subsequent calls while model is warm: ~2 min.
-- **n8n Config Agent JSON body:** The Config Agent HTTP Request node's
-  jsonBody field must use `={{ $json.body }}` to forward the webhook payload.
-  The old expression (`{{ JSON.stringify(.body) }}`) caused 422 errors.
+- **n8n webhook body:** Payload lands in `$json.body`, not `$json`.
+  Always use `{{ $json.body }}` in HTTP Request node JSON field.
 - **Git Bash path mangling:** `/data` gets mangled. Use `//data` or
   `winpty` prefix, or use PowerShell.
 - **requirements_agent prompt tuning:** Unknown whether phi4-mini handles
@@ -197,32 +198,24 @@ docker compose -f infra/docker-compose.yml stop
 
 **Blocked by:** n8n HTTP Request timeout 30s < phi4-mini cold start + inference
 
-### 2026-03-19 — MAPS Migration, CLAUDE.md
+### 2026-03-20 — MAPS Migration + n8n Pipeline Debugging
 **Completed:**
-- MAPS workflow defined and adopted (ADR-006)
-- CLAUDE.md written for repo root — Claude Code runtime instructions
-- PROJECT_STATE.md created (replaces HANDOFF.md)
-- ai-os updated: MAPS definition in IDENTITY.md and MEMORY.md
-- Nimbalyst installed
+- MAPS workflow fully operational — first two Nimbalyst/Claude Code sessions
+  successful (timeout fix, JSON body fix)
+- Claude Code installed and authenticated
+- PROJECT_STATE.md created and checked in
+- phi4-mini inference confirmed working E2E — agent completing all 3
+  LangGraph steps, pipeline routing correctly to IF node
+- Pre-warm pattern established for Ollama cold start
+- Discovered systematic missing $ prefix issue in workflow JSON expressions
 
-**Next session start:** Fix n8n timeout → test full pipeline E2E
+**Decisions made:** None new — existing ADRs hold
 
-### 2026-03-20 — n8n Workflow Fixes (Timeout + JSON Body)
-**Completed:**
-- FIX 1: Config Agent node timeout increased from 30000ms to 600000ms (10 min)
-- FIX 2: Config Agent node jsonBody fixed — `{{ JSON.stringify(.body) }}` → `{{ $json.body }}`
-- PROJECT_STATE.md updated — Known Issues, Active Tasks, Session Log
+**Pipeline status:** Agent inference working. Blocked only by n8n expression
+syntax errors in downstream nodes (Auto-approve, Respond, Gmail).
+Next session fixes all remaining $ prefix issues in one Nimbalyst pass,
+then adds CI linter as regression test.
 
-**Decisions made:** None (fixes only)
-
-**Next session start:** Republish workflow in n8n → retest with curl → requirements_agent E2E
-
-### 2026-03-20 — n8n IF Node Fix (Human Review Gate)
-**Completed:**
-- FIX 3: "Human review required?" IF node — broken expression `={{ .human_review_required }}` → `={{ $json.human_review_required }}`. Missing `$json` prefix caused "invalid syntax" errors, breaking the ISO 26262 confidence gate (ADR-001).
-- Operator updated from `equal` (with rightValue) to `true` (singleValue) — correct n8n v2 IF boolean check.
-- Removed duplicate/broken condition entries — single clean condition remains.
-
-**Decisions made:** None (bug fix only)
-
-**Next session start:** Republish workflow in n8n → retest full pipeline with curl → requirements_agent E2E
+**Key insight:** n8n workflow JSON generated programmatically had systematic
+missing $ prefix in expressions. All `={{ .fieldname }}` must be
+`={{ $json.fieldname }}`. CI linter will prevent recurrence.

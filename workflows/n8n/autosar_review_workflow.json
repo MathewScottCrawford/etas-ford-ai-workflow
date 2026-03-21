@@ -58,7 +58,7 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict",
+            "typeValidation": "loose",
             "version": 3
           },
           "conditions": [
@@ -90,9 +90,9 @@
     {
       "parameters": {
         "sendTo": "mathew.s.crawford@gmail.com",
-        "subject": "=\u26a0\ufe0f ARXML Review \u2014 Human Approval Required | Confidence: {{ .confidence_score }}",
+        "subject": "=\u26a0\ufe0f ARXML Review \u2014 Human Approval Required | Confidence: {{ $json.confidence_score }}",
         "emailType": "html",
-        "message": "=<h2>AUTOSAR ARXML Review \u2014 Human Approval Required</h2><p><b>Confidence score:</b> {{ .confidence_score }}</p><p><b>Rationale:</b> {{ .rationale }}</p><p><b>Traceability refs:</b> {{ .traceability_refs.join(', ') }}</p><h3>Findings</h3><pre>{{ JSON.stringify(.findings, null, 2) }}</pre><hr><p><i>AI-assisted output. Human approval required before baseline entry per ADR-001.</i></p>",
+        "message": "=<h2>AUTOSAR ARXML Review \u2014 Human Approval Required</h2><p><b>Confidence score:</b> {{ $json.confidence_score }}</p><p><b>Rationale:</b> {{ $json.rationale }}</p><p><b>Traceability refs:</b> {{ $json.traceability_refs.join(', ') }}</p><h3>Findings</h3><pre>{{ JSON.stringify($json.findings, null, 2) }}</pre><hr><p><i>AI-assisted output. Human approval required before baseline entry per ADR-001.</i></p>",
         "options": {}
       },
       "id": "node-gmail-notify",
@@ -130,7 +130,7 @@
             {
               "id": "confidence-field",
               "name": "confidence_score",
-              "value": "={{ .confidence_score }}",
+              "value": "={{ $json.confidence_score }}",
               "type": "number"
             }
           ]
@@ -150,7 +150,7 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ JSON.stringify({ status: \"auto_approved\", confidence_score: .confidence_score, findings_count: .findings.length, human_review_required: false, ai_assisted: true }) }}",
+        "responseBody": "={{ JSON.stringify({ status: \"auto_approved\", confidence_score: $json.confidence_score, findings_count: $json.findings.length, human_review_required: false, ai_assisted: true }) }}",
         "options": {}
       },
       "id": "node-auto-approve",
@@ -166,7 +166,7 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ JSON.stringify({ status: \"pending_human_review\", confidence_score: .confidence_score, notification: \"Email sent to mathew.s.crawford@gmail.com\", human_review_required: true }) }}",
+        "responseBody": "={{ JSON.stringify({ status: \"pending_human_review\", confidence_score: $json.confidence_score, notification: \"Email sent to mathew.s.crawford@gmail.com\", human_review_required: true }) }}",
         "options": {}
       },
       "id": "node-respond-review",

@@ -1,5 +1,5 @@
 # PROJECT_STATE.md
-# =============================================================================
+# =========
 # File:    PROJECT_STATE.md
 # Project: AI-Assisted Automotive Software Engineering Workflow (MAPS)
 # Author:  Mathew S. Crawford | mathew.s.crawford@gmail.com
@@ -9,7 +9,7 @@
 #          updated at session end. Source of truth for current status,
 #          decisions made, and next actions.
 #          Part of MAPS (Mathew's Agentic Pipeline Stack).
-# =============================================================================
+# =========
 
 ## How to Use This File
 
@@ -23,13 +23,13 @@
 ## Current Status — March 2026
 
 | Component | Status |
-|-----------|--------|
+| --- | --- |
 | Docker Compose stack | ✅ Verified — all 3 containers healthy |
 | config_agent (port 8001) | ✅ E2E tested — 7-change COM diff, confidence 0.8 |
 | requirements_agent (port 8002) | ⚠️ Code complete — E2E test pending |
 | arxml_diff.py | ✅ Tested — COM/OS/DCM module filter working |
 | email_catchup_workflow (n8n) | ✅ Running — daily Gmail catchup |
-| AUTOSAR review workflow (n8n) | ⚠️ Imported and published — blocked by 30s timeout |
+| AUTOSAR review workflow (n8n) | ⚠️ Expression fixes applied, auto-approve branch verified — re-import + full E2E test pending |
 | safety_guardrails.py | ⚠️ Code complete — not independently validated |
 | GitHub Actions CI | ⚠️ ci.yml committed — needs push to trigger |
 | Jenkinsfile | ❌ Needs Jenkins instance |
@@ -53,8 +53,8 @@ Priority order:
 - [ ] **Export corrected workflow JSON** from n8n after fixes verified.
 - [ ] **Update Nimbalyst** — version 0.56.6 available, install failed.
       Try running installer as administrator from:
-      `C:\Users\Mat\AppData\Local\@nimbalystelect ron-updater\pending\`
-- [ ] **requirements_agent E2E test** — containers running on port 8002.
+      `C:\Users\Mat\AppData\Local\@nimbalystelect ron-updater\pending`
+- [ ] **requirements\_agent E2E test** — containers running on port 8002.
 - [ ] **GitHub Actions CI** — trigger by pushing a commit, verify green.
 
 ---
@@ -151,9 +151,9 @@ first, then recompile CLAUDE.md.
   Always use `{{ $json.body }}` in HTTP Request node JSON field.
 - **Git Bash path mangling:** `/data` gets mangled. Use `//data` or
   `winpty` prefix, or use PowerShell.
-- **requirements_agent prompt tuning:** Unknown whether phi4-mini handles
+- **requirements\_agent prompt tuning:** Unknown whether phi4-mini handles
   ASPICE SWE.1 analysis adequately on first pass. May need prompt iteration.
-- **safety_guardrails.py:** Only exercised through config_agent test.
+- **safety\_guardrails.py:** Only exercised through config_agent test.
   Not independently validated. Treat as unverified until tested directly.
 
 ---
@@ -219,3 +219,21 @@ then adds CI linter as regression test.
 **Key insight:** n8n workflow JSON generated programmatically had systematic
 missing $ prefix in expressions. All `={{ .fieldname }}` must be
 `={{ $json.fieldname }}`. CI linter will prevent recurrence.
+
+### 2026-03-21 — n8n Workflow Expression Fixes
+**Completed:**
+- Fixed ALL missing `$` prefix issues in `autosar_review_workflow.json` —
+  9 expression fixes across 5 nodes (Gmail subject, Gmail body ×4,
+  Set node, Auto-approve ×2, Respond — pending review)
+- Added `"typeValidation": "loose"` to IF node (`Human review required?`)
+  to handle string/boolean type coercion from agent JSON response
+- Pipeline reached Auto-approve node successfully — auto-approve branch
+  verified (webhook → config_agent → IF gate → auto-approve response).
+  Human review branch (Gmail → Set → Respond) not yet tested.
+
+**Decisions made:** None new — existing ADRs hold
+
+**Pipeline status:** All known expression syntax errors resolved. Auto-approve
+branch verified; human review branch (Gmail → Set → Respond) untested.
+Workflow ready for re-import into n8n and full E2E test of both branches.
+Next: CI linter (`scripts/lint_n8n_workflows.py`) as regression test.

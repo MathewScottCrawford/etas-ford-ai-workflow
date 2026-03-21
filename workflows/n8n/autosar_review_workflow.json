@@ -92,7 +92,7 @@
         "sendTo": "mathew.s.crawford@gmail.com",
         "subject": "=\u26a0\ufe0f ARXML Review \u2014 Human Approval Required | Confidence: {{ $json.confidence_score }}",
         "emailType": "html",
-        "message": "=<h2>AUTOSAR ARXML Review \u2014 Human Approval Required</h2><p><b>Confidence score:</b> {{ $json.confidence_score }}</p><p><b>Rationale:</b> {{ $json.rationale }}</p><p><b>Traceability refs:</b> {{ $json.traceability_refs.join(', ') }}</p><h3>Findings</h3><pre>{{ JSON.stringify($json.findings, null, 2) }}</pre><hr><p><i>AI-assisted output. Human approval required before baseline entry per ADR-001.</i></p>",
+        "message": "=<h2>AUTOSAR ARXML Review \u2014 Human Approval Required</h2><p><b>Confidence score:</b> {{ $json.confidence_score }}</p><p><b>Rationale:</b> {{ $json.rationale }}</p><p><b>Traceability refs:</b> {{ $json.traceability_refs }}</p><h3>Findings</h3><pre>{{ $json.findings }}</pre><hr><p><i>AI-assisted output. Human approval required before baseline entry per ADR-001.</i></p>",
         "options": {}
       },
       "id": "node-gmail-notify",
@@ -250,5 +250,6 @@
     "saveDataErrorExecution": "all",
     "executionOrder": "v1"
   },
-  "active": false
+  "active": false,
+  "id": "A2IAqTFVZ4dfYRLZ"
 }

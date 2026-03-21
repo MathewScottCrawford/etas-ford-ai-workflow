@@ -41,21 +41,17 @@
 
 Priority order:
 
-- [ ] **Fix ALL missing $ prefix in workflow JSON** — Nimbalyst session:
-      audit entire autosar_review_workflow.json for `={{ .*\.[a-z]` pattern,
-      fix all instances in one pass. Known affected nodes: Auto-approve,
-      Respond — pending review, Gmail notification. Also add
-      `"typeValidation": "loose"` to IF node options.
+- [ ] **CLI import workflow + full E2E test** — use CLI import command above,
+      republish, pre-warm Ollama, fire curl test. Expect Gmail notification
+      (confidence was 0.74 on last run — just below 0.75 threshold).
 - [ ] **Add CI linter for n8n expression syntax** — new file
       `scripts/lint_n8n_workflows.py` that greps workflow JSON files for
-      missing `$` prefix pattern (`={{ *\.[a-zA-Z]`). Add as step in
-      `.github/workflows/ci.yml`. This is the regression test.
-- [ ] **Export corrected workflow JSON** from n8n after fixes verified.
-- [ ] **Update Nimbalyst** — version 0.56.6 available, install failed.
-      Try running installer as administrator from:
-      `C:\Users\Mat\AppData\Local\@nimbalystelect ron-updater\pending`
-- [ ] **requirements\_agent E2E test** — containers running on port 8002.
+      missing `$` prefix pattern. Add as step in `.github/workflows/ci.yml`.
+- [ ] **requirements_agent E2E test** — containers running on port 8002.
+      Swagger UI at `http://localhost:8002/docs`.
 - [ ] **GitHub Actions CI** — trigger by pushing a commit, verify green.
+- [ ] **Update Nimbalyst** — version 0.56.6 available, install failed.
+      Try running installer as administrator.
 
 ---
 
@@ -145,10 +141,16 @@ first, then recompile CLAUDE.md.
 ## Known Issues / Watch Points
 
 - **phi4-mini cold start:** ~35 second model load + 4 min first inference.
-  n8n timeout was 30s — fix to 300000ms (5 min) is the immediate next task.
+  n8n timeout set to 600000ms (10 min). Pre-warm Ollama before firing workflow:
+  `curl -X POST http://localhost:11434/api/chat -d '{"model":"phi4-mini","messages":[{"role":"user","content":"hi"}],"stream":false}'`
   Subsequent calls while model is warm: ~2 min.
-- **n8n webhook body:** Payload lands in `$json.body`, not `$json`.
-  Always use `{{ $json.body }}` in HTTP Request node JSON field.
+- **n8n Config Agent JSON field:** Payload from webhook lands in `$json.body`.
+  Use `{{ $json.body }}` in Config Agent HTTP Request node JSON field.
+- **n8n expression $ prefix:** ALL expressions must use `$json.fieldname` not
+  `.fieldname`. Missing `$` causes "invalid syntax" at runtime. CLI import
+  preferred over UI import to avoid import drift.
+- **n8n IF node type coercion:** Agent returns `human_review_required` as
+  string not boolean. Fix: `typeValidation: "loose"` in IF node options.
 - **Git Bash path mangling:** `/data` gets mangled. Use `//data` or
   `winpty` prefix, or use PowerShell.
 - **requirements\_agent prompt tuning:** Unknown whether phi4-mini handles
@@ -171,6 +173,25 @@ curl http://localhost:8001/health
 curl http://localhost:8002/health
 # 5. n8n UI: http://localhost:5678
 ```
+
+
+## n8n Workflow Import (CLI — preferred over UI import)
+
+Use this instead of Ctrl+A → Delete → Import from File.
+CLI overwrites the existing workflow by ID — no append/import drift.
+
+```bash
+# Import/overwrite AUTOSAR review workflow
+docker exec infra-n8n-1 n8n import:workflow \
+  --input=/workflows/autosar_review_workflow.json
+
+# Then republish in n8n UI (CLI import sets workflow to inactive)
+# http://localhost:5678 → open workflow → Publish
+```
+
+**Workflow ID:** `A2IAqTFVZ4dfYRLZ` (embedded in JSON, matches n8n URL)
+**Note:** JSON must have `"id": "A2IAqTFVZ4dfYRLZ"` for overwrite to work.
+If ID is missing, CLI creates a new workflow instead of replacing.
 
 ## Shutdown Sequence
 
